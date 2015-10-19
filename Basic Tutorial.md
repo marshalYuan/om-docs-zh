@@ -24,11 +24,13 @@
 
 现在，试着把`dom/h1`变成`dom/p`,保存文件，注意你的浏览器窗口。他应该已经自动重新加载了，打开控制台，你应该也会看到打印的Figwheel日志。 这个代码改变并没有触及`app-state`。为了编辑`app-state`,你需要刷新浏览器去重置它，或者在与浏览器相连的REPL中直接操作它。在你运行`lein figwheel`的终端内，你可以看到一个REPL。如果没有，尝试刷新下你的浏览器。你可以像下面这样简单地尝试下REPL：
 
-```cljs.user> (js/alert "Am I connected?")```
+```clojure
+cljs.user> (js/alert "Am I connected?")
+```
 
 你应该可以在你的浏览器中看到这个alert。当你点击“确定”之后，这个表单时会在REPL中返回一个`nil`。这一步中，如果你看到一些异常或者错误信息，可以在运行之前排除下Figwheel的浏览器REPL的故障。如果一切安好，我们可以将命名空间从`cljs.user`切换到`om-tut.core`(我们所有代码存在的空间)，然后改变state：
 
-```
+```clojure
 cljs.user=> (in-ns 'om-tut.core)
 nil
 om-tut.core=> (swap! app-state assoc :text "Do it live!")
@@ -42,7 +44,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 `om.core/root`(这里的别名为om/root)，可以建立一个Om的渲染loop在一个指定的DOM元素上。`om.root`表达式在此时的用法看起来如下所示：
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (reify
@@ -56,7 +58,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 一个应用程序可以同时有多个root。编辑`resources/public/index.html`,把`<div id="app"><h2>Figwheel..</h2><p>Checkout..</p></div>`换为：
 
-```
+```html
  <div id="app0"></div>
 
  <div id="app1"></div>
@@ -64,7 +66,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 你需要刷新浏览器在改变`resources/public/index.html`之后，因为Figwheel不会处理HTML文件的重加载。然后编辑`src/om_tut/core.cljs`把om/root表达式改变为:
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (om/component (dom/h2 nil (:text data))))
@@ -74,7 +76,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 刷新你的浏览器。你现在只能在页面上看到一个h2标签。拷贝粘贴om/root表达式，然后编辑第二个表达式为如下样子：
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (om/component (dom/h2 nil (:text data))))
@@ -86,7 +88,9 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 在REPL中运行：
 
-```om-tut.core=> (swap! app-state assoc :text "Multiple roots!")```
+```clojure
+om-tut.core=> (swap! app-state assoc :text "Multiple roots!")
+```
 
 你应该可以看到两个h2标签都在更新。Om对多个root可以完美的支持，并且可以在同一个[requestAnimationFrame](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestAnimationFrame)中同步渲染。
 
@@ -96,13 +100,15 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 改变`app-state`为如下表达式，然后刷新浏览器：
 
-```(defonce app-state (atom {:list ["Lion" "Zebra" "Buffalo" "Antelope"]}))```
+```clojure
+(defonce app-state (atom {:list ["Lion" "Zebra" "Buffalo" "Antelope"]}))
+```
 
 如果我们不是使用`defonce`，出于Figwheel的代码重加载机制，我们每次改变代码时，state都会重启。如果我们想在当前的`app-state`中尝试新的代码，那将是不可能的。
 
 现在我们改变下`om/root`表达式然后保存。不要抱怨刷新，[John McCarthy](http://library.stanford.edu/collections/john-mccarthy-papers-0)(Lisp 之父)会生气的。
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (om/component
@@ -115,7 +121,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 你可能对`dom/ul`和`dom/li`的第一个参数是`nil`感到好奇。这个参数其实就是你设置给这个DOM的属性。熟悉React的同学，很容易联想到`React.createElement(type, props, children)`和`React.DOM.ul(props, children)`里的props参数。现在我们再做一些小改动：
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (om/component
@@ -130,33 +136,35 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 其中，`#js {...}`是js中的Object：
 
-```
+```clojure
 #js {:foo "bar"}  ;; is equivalent to
 #js {"foo" "bar"}
 ```
 `#js [...]`是js中的Array:
 
-```
+```clojure
 #js [1 2 3]
 ```
 为什么会这样呢？因为Clojurescript中seq都是持久化的数据集，而有时我们只需要js中普通的数据结构，这时我们就可以使用#js。
 当然#js是一个浅层的限定符，如下：
 
-```#js {:foo [1 2 3]} ;; 一个包含clojure持久化向量的JS object```
+```clojure
+#js {:foo [1 2 3]} ;; 一个包含clojure持久化向量的JS object
+```
 
 ##Life without a templating language
 在Om框架下，你可以使用Clojurescript的强大功能去构建用户界面。同时，Om也向你敞开了使用可选的语法去构建DOM的大门，如果这些语法也是你的菜的话。
 
 让我们修改下我们的代码，来构建一个有斑马纹的list。首先，我们在`om/root`前添加一个辅助函数stripe：
 
-```
+```clojure
 (defn stripe [text bgc]
   (let [st #js {:backgroundColor bgc}]
     (dom/li #js {:style st} text)))
 ```
 然后，修改下原来的root并保存：
 
-```
+```clojure
 (om/root
   (fn [data owner]
     (om/component
@@ -172,13 +180,13 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 然后把om/root修改为：
 
-```
+```clojure
 (om/root contacts-view app-state
   {:target (. js/document (getElementById "contacts"))})
 ```
 先别急着保存，我们还没定义`contacts-view`，我们先来编辑下app-state：
 
-```
+```clojure
 (defonce app-state
   (atom
     {:contacts
@@ -191,7 +199,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 ```
 然后定义下`contacts-view`:
 
-```
+```clojure
 (defn contacts-view [data owner]
   (reify
     om/IRender
@@ -205,7 +213,7 @@ om-tut.core=> (swap! app-state assoc :text "Do it live!")
 
 好了，万事俱备只欠东风，我们来写一个`contact-view`，并把他放在`contacts-view`之后。
 
-```
+```clojure
 (defn contact-view [contact owner]
   (reify
     om/IRender
@@ -223,13 +231,13 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 那我们就来定义一个`display-name`，并放在`contact-view`之前。
 
-```
+```clojure
 (defn display-name [{:keys [first last] :as contact}]
   (str last ", " first (middle-name contact)))
 ```
 这里，我们浅尝了一下clojure的map解构。非常方便是吧！ 最后，我们再来写一个`middle-name`的helper，它应该放在`display-name`之前。
 
-```
+```clojure
 (defn middle-name [{:keys [middle middle-initial]}]
   (cond
     middle (str " " middle)
@@ -243,7 +251,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 现在，我们把contacts删除。修改下`contact-view`:
 
-```
+```clojure
 (defn contact-view [contact owner]
   (reify
     om/IRender
@@ -261,7 +269,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 为了实现组件间通信的功能，我们将引入core.async的channel机制。现在，我们吧命名空间修改为:
 
-```
+```clojure
 (ns ^:figwheel-always om-tut.core
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
@@ -271,7 +279,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 照旧，保存文件刷新浏览器。（注意：为了这一步正常，这里已经添加了依赖`[org.clojure/core.async "x.x.x"]`在文件`project.clj`中。如果你要在未来的项目中手动添加这个依赖的时候，你必须要先重启或停止`lein figwheel`进程）。修改下`contact-view`:
 
-```
+```clojure
 (defn contact-view [contact owner]
   (reify
     om/IRenderState
@@ -285,7 +293,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 对`contacts-view`做一个大改动，别担心，我们一点一点地了解这些改动的意义。
 
-```
+```clojure
 (defn contacts-view [data owner]
   (reify
     om/IInitState
@@ -317,7 +325,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 既然我们已经有了删除功能，那么现在是时候修改下我们的程序让它可以添加新的联系人了吧！首先修改下命名空间，然后重新运行下`lein figwheel`并刷新下浏览器：
 
-```
+```clojure
 (ns ^:figwheel-always om-tut.core
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
@@ -329,7 +337,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 接着我们添加一个叫`parse-contact`的方法并保存。
 
-```
+```clojure
 (defn parse-contact [contact-str]
   (let [[first middle last :as parts] (string/split contact-str #"\s+")
         [first last middle] (if (nil? last) [first middle] [first last middle])
@@ -344,7 +352,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 当然，这里有很多种方式去实现一个这种功能的`parse-contact`,而且这肯定也不是最后的实现，但是它展示了一些clojure编程的惯用风格。如果你并不是一个Clojure或ClojureScript的老手，在执行这个方法之前，花一些时间来读懂上面这个实现是非常值得的。
 
 在REPL中，尝试给这个方法一些输入，看看结果！
-```
+```clojure
 (in-ns 'om-tut.core)
 (parse-contact "Gerald J. Sussman")
 ```
@@ -357,7 +365,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 一旦，你看到这个方法已经能正常工作，我们就可以着手写一个`add-contact`。看起来就像这样：
 
-```
+```clojure
 (defn add-contact [data owner]
   (let [new-contact (-> (om/get-node owner "new-contact")
                         .-value
@@ -367,7 +375,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 ```
 这一步，我们需要使用`om.core/get-node`方法来获取文本输入框中的值。我们看看接下来我们的contacts-view：
 
-```
+```clojure
 (defn contacts-view [data owner]
   (reify
     om/IInitState
@@ -402,7 +410,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 受React的声明模型，在Om中处理输入都有点更具挑战性，也更灵活。“最简单”的清空文本输入框的方法大概就是把add-contact修改为：
 
-```
+```clojure
 (defn add-contact [data owner]
   (let [input (om/get-node owner "new-contact")
         new-contact (-> input .-value parse-contact)]
@@ -414,7 +422,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 因为contacts-view"拥有"这个文本输入框，因此我们可以考虑把它的值作为contacts-view的state的一部分。来吧，我们再来改一下contacts-view：
 
-```
+```clojure
 (defn contacts-view [data owner]
   (reify
     om/IInitState
@@ -446,7 +454,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 我们刚才往contacts-view的state里加了一些新东西。造成的状况是，不管用户输入什么，我们都会把输入框的值设为state中`:text`的值。所以，我们需要让它的值和输入框的值保持一致。让我们再次修改下contacts-view，加入监听输入框值的变化事件的代码：
 
-```
+```clojure
 (defn contacts-view [data owner]
   (reify
     om/IInitState
@@ -476,7 +484,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 ```
 在保存之前，我们再在contacts-view之前添加一个handle-change函数：
 
-```
+```clojure
 (defn handle-change [e owner {:keys [text]}]
   (om/set-state! owner :text (.. e -target -value)))
 ```
@@ -484,7 +492,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 最后，让我们再加一小段代码去清空输入框。如你所见，这种做法很像我们开始那个“简易”尝试的做法，除了我们不再直接操作这个引用(ref)而是改变这个应用的state：
 
-```
+```clojure
 (defn add-contact [data owner]
   (let [new-contact (-> (om/get-node owner "new-contact")
                         .-value
@@ -495,7 +503,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 ```
 我知道你想说这看起来像是一个事倍功半的做法，除了刚才我们看到的我们可以真正地细粒度控制用户输入的内容。例如，如果要求名字中不能含有数字，我们可以通过修改下`handle-change`来阻止这种行为：
 
-```
+```clojure
 (defn handle-change [e owner {:keys [text]}]
   (let [value (.. e -target -value)]
     (if-not (re-find #"[0-9]" value)
@@ -512,7 +520,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 
 好的，我们开始重新开始吧。你的`resources/public/index.html`应该被修改为：
 
-```
+```html
 <!DOCTYPE html>
 <html>
   <head>
@@ -526,7 +534,7 @@ WARNING: Use of undeclared Var om-tut.core/display-name at line 30 src/om_tut/co
 ```
 你的源文件：
 
-```
+```clojure
 ns ^:figwheel-always om-tut.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -579,7 +587,7 @@ ns ^:figwheel-always om-tut.core
 
 在display-name之后，我们添加如下代码：
 
-```
+```clojure
 (defmulti entry-view (fn [person _] (:type person)))
 
 (defmethod entry-view :student
@@ -593,7 +601,7 @@ ns ^:figwheel-always om-tut.core
 
 让我们再entry-view之前写几个底层落地的view吧：
 
-```
+```clojure
 (defn student-view [student owner]
   (reify
     om/IRender
@@ -613,7 +621,7 @@ ns ^:figwheel-always om-tut.core
 
 最后，我们对registry-view稍作修改，使其更加简洁，条理更清晰。
 
-```
+```clojure
 defn registry-view [data owner]
   (reify
     om/IRender
@@ -626,7 +634,7 @@ defn registry-view [data owner]
 
 好了，万事俱备，还差一个people方法。我们希望渲染professor的时候带着他们准确地课程编号列表。所以，在registry-view前添加：
 
-```
+```clojure
 (defn people [data]
   (->> data
     :people
@@ -647,7 +655,7 @@ defn registry-view [data owner]
 
 再次修改下`resources/public/index.html`:
 
-```
+```html
 <!DOCTYPE html>
 <html>
   <head>
@@ -662,7 +670,7 @@ defn registry-view [data owner]
 ```
 还有`resources/public/css/style.css`:
 
-```
+```css
 ul li input {
     width: 400px;
 }
@@ -673,7 +681,7 @@ ul li button {
 
 然后在registry-view后添加一个`class-view`:
 
-```
+```clojure
 (defn classes-view [data owner]
   (reify
     om/IRender
@@ -686,7 +694,7 @@ ul li button {
 
 然后我们添加到一个新的`om/root`表达式并用上前面定义的view：
 
-```
+```clojure
 (om/root classes-view app-state
   {:target (. js/document (getElementById "classes"))})
 ```
@@ -697,7 +705,7 @@ ul li button {
 
 当用户编辑一个课程名时，我们应该隐藏原来的文本然后展现一个输入框。因此，我们需要一点helper方法去完成这部分工作。在app-state后添加`display`：
 
-```
+```clojure
 (defn display [show]
   (if show
     #js {}
@@ -705,13 +713,13 @@ ul li button {
 ```
 当用户编辑一个课程名时，每按下一次按键，我们都希望去更新当前应用的state：
 
-```
+```clojure
 (defn handle-change [e text owner]
   (om/transact! text (fn [_] (.. e -target -value))))
 ```
 另外，当输入框失去焦点的时候，我们希望能推出编辑模式：
 
-```
+```clojure
 (defn commit-change [text owner]
   (om/set-state! owner :editing false))
 ```
@@ -719,7 +727,7 @@ ul li button {
 
 ** 一定要保证`extend-type`句式（译者注：lisp中form的一种译法）放在`om/root`句式之前。 **把它们放在靠近文件顶部的位置不失为一个好办法。
 
-```
+```clojure
 (extend-type string
   ICloneable
   (-clone [s] (js/String. s)))
@@ -727,7 +735,7 @@ ul li button {
 
 悲剧的是，光这样还是不够的，因为javascript的字符串对象和javascript的原始字符串并不等价：
 
-```
+```clojure
 (extend-type js/String
   ICloneable
   (-clone [s] (js/String. s))
@@ -736,7 +744,7 @@ ul li button {
 ```
 我们稍后会解释一下`IValue`。此时，会触发一个Clojurescript编译器的一个警告。正常来说，我们不能对这些警告视而不见，但是在这里，为了能够保持`editable`足够的简洁，我们不得不搞出这些幺蛾子。因为Figwheel在默认配置下，并不会对存在警告的代码进行重载，所以我们需要在`project.clj`中添加一段这样的配置：
 
-```
+```clojure
 :figwheel { :load-warninged-code true  ;; <- Add this
             :on-jsload "om-tut-v1.core/on-js-reload" }
 ```
@@ -744,7 +752,7 @@ ul li button {
 
 下面就是这个editable组件；看起来有点复杂，但花一点时间来阅读它，你会发现其实很简单。
 
-```
+```clojure
 (defn editable [text owner]
   (reify
     om/IInitState
@@ -770,7 +778,7 @@ ul li button {
 
 同样因为课程名可能是一个字符串对象而不是一个原始字符串，我们需要更改下`professor-view`：
 
-```
+```clojure
 (defn professor-view [professor owner]
   (reify
     om/IRender
@@ -784,7 +792,7 @@ ul li button {
 
 来，我们试下在`classes-view`中使用`editable`:
 
-```
+```clojure
 (defn classes-view [data owner]
   (reify
     om/IRender
